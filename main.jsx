@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { createRoot } from "react-dom/client";
 
 /* ----------------------------- snippet bank ----------------------------- */
 /* Original short patterns (not copied from any real repo) covering heavy
@@ -719,3 +720,10 @@ export default function TypeTrainer() {
     </div>
   );
 }
+
+/* --------------------------- mount the app --------------------------- */
+createRoot(document.getElementById("root")).render(
+  <React.StrictMode>
+    <TypeTrainer />
+  </React.StrictMode>
+);
