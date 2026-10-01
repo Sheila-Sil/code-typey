@@ -22,6 +22,11 @@
   --blue: #6cb6ff;
   --amber: #ffcc66;
   --accent: var(--amber);
+  --syn-kw: #c792ea;
+  --syn-type: #6cc4d6;
+  --syn-str: #a5d6a7;
+  --syn-num: #f7a76c;
+  --syn-com: #5f7389;
 
   min-height: 100vh;
   background: var(--bg);
@@ -47,6 +52,11 @@
   --red: #cf222e;
   --blue: #0969da;
   --amber: #9a6700;
+  --syn-kw: #8250df;
+  --syn-type: #0a6b80;
+  --syn-str: #1a7f37;
+  --syn-num: #b35900;
+  --syn-com: #7a8896;
 }
 
 .tt-root *,
@@ -98,12 +108,22 @@
 
 .tt-titletext {
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   text-align: center;
   color: var(--dim);
   font-size: 12px;
 }
 
-.tt-theme {
+.tt-titlebar-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.tt-theme,
+.tt-syntax {
   background: transparent;
   border: 1px solid var(--border);
   color: var(--dim);
@@ -113,7 +133,8 @@
   font-size: 11px;
   cursor: pointer;
 }
-.tt-theme:hover {
+.tt-theme:hover,
+.tt-syntax:hover {
   color: var(--text);
   border-color: var(--dim);
 }
@@ -172,6 +193,14 @@
   min-width: 8px;
 }
 
+.tt-select-topic {
+  max-width: 128px;
+  text-overflow: ellipsis;
+}
+.tt-select:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
 .tt-select {
   background: var(--panel);
   color: var(--text);
@@ -213,9 +242,13 @@
   color: var(--accent);
   border-color: var(--accent);
 }
-.tt-btn.ghost.danger:hover {
+.tt-btn.ghost.danger:hover,
+.tt-btn.ghost.danger.confirming {
   color: var(--red);
   border-color: var(--red);
+}
+.tt-btn.ghost.danger.confirming {
+  background: rgba(255, 107, 107, 0.1);
 }
 .tt-btn kbd {
   font: inherit;
@@ -347,6 +380,31 @@
 .ch.correct {
   color: var(--text);
 }
+/* Syntax colour: muted while it is still ahead of you, full strength once
+   typed, so "done" versus "to do" still reads at a glance. */
+.ch.tk-kw {
+  --tok: var(--syn-kw);
+}
+.ch.tk-type {
+  --tok: var(--syn-type);
+}
+.ch.tk-str {
+  --tok: var(--syn-str);
+}
+.ch.tk-num {
+  --tok: var(--syn-num);
+}
+.ch.tk-com {
+  --tok: var(--syn-com);
+  font-style: italic;
+}
+.ch.pending[class*="tk-"]:not(.current) {
+  color: var(--dimmer);
+  color: color-mix(in srgb, var(--tok) 50%, var(--dimmer));
+}
+.ch.correct[class*="tk-"]:not(.current) {
+  color: var(--tok);
+}
 .ch.incorrect {
   color: var(--red);
   background: rgba(255, 107, 107, 0.16);
@@ -424,6 +482,18 @@
 .tt-done-stats span {
   font-size: 11px;
   color: var(--dim);
+}
+.tt-best-note {
+  margin: -4px 0 12px;
+  font-size: 12px;
+  color: var(--dim);
+}
+.tt-best-note.new {
+  color: var(--amber);
+  font-weight: 600;
+}
+.tt-best-note.new::before {
+  content: "\2605  ";
 }
 .tt-done-actions {
   display: flex;
@@ -1124,4 +1194,18 @@
 .tt-zone:not(:focus-within) .tt-code {
   opacity: 0.45;
   filter: saturate(0.6);
+}
+
+.tt-danger-zone {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border);
+  font-size: 11px;
+  color: var(--dim);
 }

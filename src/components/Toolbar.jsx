@@ -19,13 +19,15 @@ export default function Toolbar({
   lang,
   division,
   mode,
+  topic,
+  topics = [],
   onLang,
   onDivision,
   onMode,
+  onTopic,
   onNext,
   onRetry,
   onCustom,
-  onReset,
   onRefocus,
   customActive,
   poolSize,
@@ -92,7 +94,29 @@ export default function Toolbar({
         ))}
       </select>
 
-      <span className="tt-pool">{loading ? "loading…" : `${poolSize} snippets`}</span>
+      <span className="tt-flag">--topic</span>
+      <select
+        {...selectProps}
+        value={topics.includes(topic) ? topic : "all"}
+        aria-label="Topic"
+        className="tt-select tt-select-topic"
+        disabled={mode === "drill"}
+        onChange={(e) => {
+          onTopic(e.target.value);
+          afterSelect();
+        }}
+      >
+        <option value="all">all</option>
+        {topics.map((t) => (
+          <option key={t} value={t}>
+            {t}
+          </option>
+        ))}
+      </select>
+
+      <span className="tt-pool">
+        {loading ? "loading…" : `${poolSize} snippet${poolSize === 1 ? "" : "s"}`}
+      </span>
 
       <span className="tt-modes" role="group" aria-label="Practice mode">
         {MODES.map((m) => (
@@ -123,9 +147,6 @@ export default function Toolbar({
       </button>
       <button className="tt-btn ghost" onClick={act(onRetry)}>
         retry <kbd>esc</kbd>
-      </button>
-      <button className="tt-btn ghost danger" onClick={act(onReset)}>
-        reset profile
       </button>
     </div>
   );

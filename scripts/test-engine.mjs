@@ -25,6 +25,7 @@ import { classifyError, positionMap, LAYOUT_IDS } from "../src/data/layouts.js";
 import { mergeConfusions, topConfusions } from "../src/engine/stats.js";
 import { LANGUAGES, DIVISION_IDS, CORPUS_SIZE } from "../src/data/manifest.js";
 import { pushRecent, updateBest, emptyProfile } from "../src/engine/storage.js";
+import { highlight } from "../src/engine/highlight.js";
 
 let passed = 0;
 function test(name, fn) {
@@ -404,6 +405,51 @@ test("CORPUS_SIZE is the sum of the declared counts", () => {
     0
   );
   assert.equal(CORPUS_SIZE, sum);
+});
+
+
+console.log("\nsyntax highlighting");
+
+const kindAt = (code, lang, needle, offset = 0) => highlight(code, lang)[code.indexOf(needle) + offset];
+
+test("one token kind per character, and never longer", () => {
+  const code = 'for (int i = 0; i < n; i++) cout << "x\\n";';
+  assert.equal(highlight(code, "cpp").length, code.length);
+});
+
+test("keywords, types, numbers and strings are told apart", () => {
+  const code = 'for (int i = 0; i < 10; i++) s += "ab";';
+  assert.equal(kindAt(code, "cpp", "for"), "kw");
+  assert.equal(kindAt(code, "cpp", "int"), "type");
+  assert.equal(kindAt(code, "cpp", "10"), "num");
+  assert.equal(kindAt(code, "cpp", '"ab"', 1), "str");
+  assert.equal(kindAt(code, "cpp", "i++"), null, "plain identifiers stay uncoloured");
+});
+
+test("a keyword inside an identifier is not a keyword", () => {
+  assert.equal(kindAt("format(x)", "python", "format"), null);
+  assert.equal(kindAt("x1for", "cpp", "for"), null);
+});
+
+test("comment syntax follows the language", () => {
+  assert.equal(kindAt("x = 1  # note", "python", "note"), "com");
+  assert.equal(kindAt("x = a // b", "python", "b"), null, "python // is floor division");
+  assert.equal(kindAt("let x = 1; // note", "rust", "note"), "com");
+});
+
+test("a comment marker inside a string stays a string", () => {
+  assert.equal(kindAt('s = "a // b"; t', "javascript", "b\""), "str");
+  assert.equal(kindAt('s = "a // b"; t', "javascript", "; t", 2), null);
+});
+
+test("rust lifetimes are not mistaken for char literals", () => {
+  const code = "fn f<'a>(x: &'a str) -> char { 'z' }";
+  assert.equal(kindAt(code, "rust", "a>"), null);
+  assert.equal(kindAt(code, "rust", "'z'", 1), "str");
+});
+
+test("an unknown language comes back uncoloured instead of throwing", () => {
+  assert.deepEqual(highlight("int x;", "cobol"), [null, null, null, null, null, null]);
 });
 
 console.log(`\n${passed} checks passed`);

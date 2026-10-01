@@ -88,6 +88,78 @@ export const JAVASCRIPT = {
         const gcd = (a, b) => (b === 0n ? a : gcd(b, a % b));
       `,
     },
+    {
+      topic: "loops",
+      title: "count down",
+      code: dedent`
+        for (let i = n - 1; i >= 0; i--) {
+            if (a[i] > best) {
+                best = a[i];
+                leaders.push(i);
+            }
+        }
+        leaders.reverse();
+      `,
+    },
+    {
+      topic: "strings",
+      title: "count vowels",
+      code: dedent`
+        const vowels = [...s].filter((c) => "aeiou".includes(c)).length;
+        console.log(vowels);
+      `,
+    },
+    {
+      topic: "math",
+      title: "digit sum",
+      code: dedent`
+        const digitSum = (x) => {
+            let s = 0;
+            while (x > 0) {
+                s += x % 10;
+                x = Math.floor(x / 10);
+            }
+            return s;
+        };
+      `,
+    },
+    {
+      topic: "destructuring",
+      title: "swap and unpack",
+      code: dedent`
+        let [lo, hi] = [a[0], a[n - 1]];
+        if (lo > hi) [lo, hi] = [hi, lo];
+        const { length: len } = a;
+        const [first, ...rest] = a;
+        console.log(lo, hi, len, first, rest.length);
+      `,
+    },
+    {
+      topic: "simulation",
+      title: "bucket pouring",
+      code: dedent`
+        const cap = [0, 0, 0];
+        const amt = [0, 0, 0];
+        for (let step = 0; step < 100; step++) {
+            const from = step % 3, to = (step + 1) % 3;
+            const pour = Math.min(amt[from], cap[to] - amt[to]);
+            amt[from] -= pour;
+            amt[to] += pour;
+        }
+      `,
+    },
+    {
+      topic: "grids",
+      title: "four-direction neighbours",
+      code: dedent`
+        const dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+        for (const [dr, dc] of dirs) {
+            const nr = r + dr, nc = c + dc;
+            if (nr < 0 || nr >= n || nc < 0 || nc >= m) continue;
+            if (grid[nr][nc] === "#") walls++;
+        }
+      `,
+    },
   ],
 
   silver: [
@@ -186,6 +258,85 @@ export const JAVASCRIPT = {
       code: dedent`
         const vals = [...new Set(a)].sort((x, y) => x - y);
         const rank = new Map(vals.map((v, i) => [v, i]));
+      `,
+    },
+    {
+      topic: "prefix sums",
+      title: "2D prefix sums",
+      code: dedent`
+        const p = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
+        for (let i = 0; i < n; i++) {
+            for (let j = 0; j < m; j++) {
+                p[i + 1][j + 1] = g[i][j] + p[i][j + 1] + p[i + 1][j] - p[i][j];
+            }
+        }
+        const rect = (r1, c1, r2, c2) => p[r2][c2] - p[r1][c2] - p[r2][c1] + p[r1][c1];
+      `,
+    },
+    {
+      topic: "binary search",
+      title: "binary search on the answer",
+      code: dedent`
+        let lo = 0, hi = 2e9;
+        while (lo < hi) {
+            const mid = Math.floor((lo + hi) / 2);
+            if (feasible(mid)) hi = mid;
+            else lo = mid + 1;
+        }
+        console.log(lo);
+      `,
+    },
+    {
+      topic: "dfs",
+      title: "iterative dfs with a stack",
+      code: dedent`
+        const seen = new Uint8Array(n);
+        const stack = [0];
+        seen[0] = 1;
+        while (stack.length) {
+            const u = stack.pop();
+            for (const v of adj[u]) {
+                if (!seen[v]) {
+                    seen[v] = 1;
+                    stack.push(v);
+                }
+            }
+        }
+      `,
+    },
+    {
+      topic: "sliding window",
+      title: "longest window under a budget",
+      code: dedent`
+        let l = 0, sum = 0, best = 0;
+        for (let r = 0; r < n; r++) {
+            sum += a[r];
+            while (sum > k) sum -= a[l++];
+            best = Math.max(best, r - l + 1);
+        }
+      `,
+    },
+    {
+      topic: "counting",
+      title: "group by key",
+      code: dedent`
+        const groups = new Map();
+        for (const [name, score] of rows) {
+            if (!groups.has(name)) groups.set(name, []);
+            groups.get(name).push(score);
+        }
+        for (const [name, scores] of groups) {
+            console.log(name, Math.max(...scores));
+        }
+      `,
+    },
+    {
+      topic: "compression",
+      title: "coordinate compression",
+      code: dedent`
+        const xs = [...new Set(a)].sort((x, y) => x - y);
+        const id = new Map(xs.map((x, i) => [x, i]));
+        const b = a.map((x) => id.get(x));
       `,
     },
   ],
@@ -312,6 +463,103 @@ export const JAVASCRIPT = {
         process.stdout.write(out.join('\n') + '\n');
       `,
     },
+    {
+      topic: "bfs",
+      title: "0-1 bfs with a deque",
+      code: dedent`
+        const dist = new Array(n).fill(Infinity);
+        const dq = new Int32Array(4 * n);
+        let head = 2 * n, tail = 2 * n;
+        dist[s] = 0;
+        dq[tail++] = s;
+        while (head < tail) {
+            const u = dq[head++];
+            for (const [v, w] of adj[u]) {
+                if (dist[u] + w < dist[v]) {
+                    dist[v] = dist[u] + w;
+                    if (w === 0) dq[--head] = v;
+                    else dq[tail++] = v;
+                }
+            }
+        }
+      `,
+    },
+    {
+      topic: "dp",
+      title: "edit distance",
+      code: dedent`
+        const dp = Array.from({ length: a.length + 1 }, (_, i) =>
+            Array.from({ length: b.length + 1 }, (_, j) => (i === 0 ? j : j === 0 ? i : 0))
+        );
+        for (let i = 1; i <= a.length; i++) {
+            for (let j = 1; j <= b.length; j++) {
+                const sub = dp[i - 1][j - 1] + (a[i - 1] !== b[j - 1] ? 1 : 0);
+                dp[i][j] = Math.min(sub, dp[i - 1][j] + 1, dp[i][j - 1] + 1);
+            }
+        }
+      `,
+    },
+    {
+      topic: "mst",
+      title: "kruskal over sorted edges",
+      code: dedent`
+        edges.sort((x, y) => x[0] - y[0]);
+        let total = 0;
+        for (const [w, u, v] of edges) {
+            if (union(u, v)) total += w;
+        }
+        console.log(total);
+      `,
+    },
+    {
+      topic: "trees",
+      title: "subtree sizes without recursion",
+      code: dedent`
+        const order = [], parent = new Int32Array(n).fill(-1);
+        const stack = [0];
+        parent[0] = 0;
+        while (stack.length) {
+            const u = stack.pop();
+            order.push(u);
+            for (const v of adj[u]) {
+                if (parent[v] === -1) { parent[v] = u; stack.push(v); }
+            }
+        }
+        const sz = new Int32Array(n).fill(1);
+        for (let i = n - 1; i > 0; i--) sz[parent[order[i]]] += sz[order[i]];
+      `,
+    },
+    {
+      topic: "dp",
+      title: "bitmask dp over subsets",
+      code: dedent`
+        const full = 1 << n;
+        const dp = new Array(full).fill(Infinity);
+        dp[0] = 0;
+        for (let mask = 0; mask < full; mask++) {
+            if (dp[mask] === Infinity) continue;
+            const i = popcount(mask);
+            for (let j = 0; j < n; j++) {
+                if (mask & (1 << j)) continue;
+                const next = mask | (1 << j);
+                dp[next] = Math.min(dp[next], dp[mask] + cost[i][j]);
+            }
+        }
+      `,
+    },
+    {
+      topic: "hashing",
+      title: "polynomial rolling hash",
+      code: dedent`
+        const B = 131n, M = 1000000007n;
+        const h = [0n], pw = [1n];
+        for (let i = 0; i < s.length; i++) {
+            h.push((h[i] * B + BigInt(s.charCodeAt(i))) % M);
+            pw.push((pw[i] * B) % M);
+        }
+        const get = (l, r) => (((h[r] - h[l] * pw[r - l]) % M) + M) % M;
+      `,
+    },
   ],
 
   platinum: [
@@ -415,6 +663,117 @@ export const JAVASCRIPT = {
                     row.reduce((acc, v, k) => (acc + v * b[k][j]) % MOD, 0)
                 )
             );
+      `,
+    },
+    {
+      topic: "segment tree",
+      title: "lazy range add",
+      code: dedent`
+        const push = (x) => {
+            if (lz[x] !== 0) {
+                for (const c of [2 * x, 2 * x + 1]) {
+                    t[c] += lz[x];
+                    lz[c] += lz[x];
+                }
+                lz[x] = 0;
+            }
+        };
+      `,
+    },
+    {
+      topic: "scc",
+      title: "tarjan's low-link",
+      code: dedent`
+        const dfs = (u) => {
+            idx[u] = low[u] = timer++;
+            stack.push(u);
+            onStack[u] = 1;
+            for (const v of adj[u]) {
+                if (idx[v] === -1) {
+                    dfs(v);
+                    low[u] = Math.min(low[u], low[v]);
+                } else if (onStack[v]) {
+                    low[u] = Math.min(low[u], idx[v]);
+                }
+            }
+        };
+      `,
+    },
+    {
+      topic: "number theory",
+      title: "linear sieve",
+      code: dedent`
+        const lp = new Int32Array(n + 1);
+        const primes = [];
+        for (let i = 2; i <= n; i++) {
+            if (lp[i] === 0) {
+                lp[i] = i;
+                primes.push(i);
+            }
+            for (const p of primes) {
+                if (p > lp[i] || i * p > n) break;
+                lp[i * p] = p;
+            }
+        }
+      `,
+    },
+    {
+      topic: "dsu",
+      title: "rollback union-find",
+      code: dedent`
+        const find = (x) => (par[x] === x ? x : find(par[x]));
+        const unite = (a, b) => {
+            a = find(a); b = find(b);
+            if (a === b) { history.push(null); return false; }
+            if (size[a] < size[b]) [a, b] = [b, a];
+            par[b] = a;
+            size[a] += size[b];
+            history.push(b);
+            return true;
+        };
+        const rollback = () => {
+            const b = history.pop();
+            if (b !== null) { size[par[b]] -= size[b]; par[b] = b; }
+        };
+      `,
+    },
+    {
+      topic: "sparse table",
+      title: "range minimum in O(1)",
+      code: dedent`
+        const lg = 32 - Math.clz32(n);
+        const sp = [Int32Array.from(a)];
+        for (let k = 1; k < lg; k++) {
+            const prev = sp[k - 1], len = n - (1 << k) + 1;
+            const row = new Int32Array(len);
+            for (let i = 0; i < len; i++) row[i] = Math.min(prev[i], prev[i + (1 << (k - 1))]);
+            sp.push(row);
+        }
+        const query = (l, r) => {
+            const k = 31 - Math.clz32(r - l + 1);
+            return Math.min(sp[k][l], sp[k][r - (1 << k) + 1]);
+        };
+      `,
+    },
+    {
+      topic: "flows",
+      title: "dinic level graph",
+      code: dedent`
+        const bfs = (s, t) => {
+            level.fill(-1);
+            level[s] = 0;
+            const q = [s];
+            for (let qi = 0; qi < q.length; qi++) {
+                const u = q[qi];
+                for (const e of adj[u]) {
+                    if (cap[e] > 0 && level[to[e]] < 0) {
+                        level[to[e]] = level[u] + 1;
+                        q.push(to[e]);
+                    }
+                }
+            }
+            return level[t] >= 0;
+        };
       `,
     },
   ],

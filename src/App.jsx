@@ -42,6 +42,8 @@ export default function App() {
   const [mode, setMode] = useState(initial.mode);
   const [theme, setTheme] = useState(profile.settings.theme);
   const [layout, setLayout] = useState(profile.settings.layout || "qwerty");
+  const [syntax, setSyntax] = useState(profile.settings.syntax !== false);
+  const [topic, setTopic] = useState(initial.topic);
 
   const [pool, setPool] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -68,6 +70,8 @@ export default function App() {
   // would swap the lesson out from under the user mid-run.
   const profileRef = useRef(profile);
   profileRef.current = profile;
+  const topicRef = useRef(topic);
+  topicRef.current = topic;
 
   /* ------------------------- snippet + drill choice ------------------------ */
 
@@ -88,6 +92,18 @@ export default function App() {
     return buildDrill({ lang: forLang, charStats: p.charStats, bigrams: p.bigrams });
   }, []);
 
+  /* A topic filter narrows the pool; one that matches nothing is ignored. */
+  const filterPool = useCallback((fullPool, wanted) => {
+    if (wanted === "all") return fullPool;
+    const narrowed = fullPool.filter((s) => s.topic === wanted);
+    return narrowed.length ? narrowed : fullPool;
+  }, []);
+
+  const topics = useMemo(
+    () => [...new Set(pool.map((s) => s.topic))].sort((a, b) => a.localeCompare(b)),
+    [pool]
+  );
+
   /* The corpus arrives per language as its own chunk. */
   useEffect(() => {
     let cancelled = false;
@@ -99,7 +115,12 @@ export default function App() {
         if (cancelled) return;
         setPool(loaded);
         setLoading(false);
-        setSnippet(choose(loaded));
+        let wanted = topicRef.current;
+        if (wanted !== "all" && !loaded.some((s) => s.topic === wanted)) {
+          wanted = "all";
+          setTopic("all");
+        }
+        setSnippet(choose(filterPool(loaded, wanted)));
       })
       .catch((err) => {
         if (cancelled) return;
@@ -110,7 +131,7 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [lang, division, choose]);
+  }, [lang, division, choose, filterPool]);
 
   /* Drills are generated locally, so they need no pool at all. */
   useEffect(() => {
@@ -118,8 +139,8 @@ export default function App() {
   }, [mode, drill, lang, makeDrill]);
 
   useEffect(() => {
-    writeUrlState({ lang, division, mode });
-  }, [lang, division, mode]);
+    writeUrlState({ lang, division, mode, topic });
+  }, [lang, division, mode, topic]);
 
   const nextLesson = useCallback(() => {
     setCustomText(null);
@@ -127,9 +148,9 @@ export default function App() {
     if (mode === "drill") {
       setDrill(makeDrill(lang));
     } else if (pool.length) {
-      setSnippet(choose(pool, { exclude: snippet?.id }));
+      setSnippet(choose(filterPool(pool, topic), { exclude: snippet?.id }));
     }
-  }, [mode, makeDrill, lang, pool, choose, snippet]);
+  }, [mode, makeDrill, lang, pool, choose, snippet, topic, filterPool]);
 
   /* --------------------------- the active lesson --------------------------- */
 
@@ -164,7 +185,13 @@ export default function App() {
         backspaces: result.backspaces,
         ms: result.activeMs,
       };
-      setLastRun({ ...run, lang, division });
+      // Compared against the best as it stood *before* this run, so the result
+      // panel can say by how much it moved.
+      const counts = !isCustom && !isDrill && Boolean(activeSnippet);
+      const prevBest = counts ? profileRef.current.best[bucketKey(lang, division)] ?? null : null;
+      const isBest =
+        counts && run.accuracy >= 90 && (!prevBest || run.netWpm > prevBest.netWpm);
+      setLastRun({ ...run, lang, division, counts, prevBest, isBest });
       setCopied(false);
 
       setProfile((prev) => {
@@ -210,6 +237,7 @@ export default function App() {
   const handleLang = useCallback(
     (value) => {
       setLang(value);
+      setTopic("all");
       setCustomText(null);
       setDrill(null);
       persistSettings({ lang: value });
@@ -220,6 +248,7 @@ export default function App() {
   const handleDivision = useCallback(
     (value) => {
       setDivision(value);
+      setTopic("all");
       setCustomText(null);
       persistSettings({ division: value });
     },
@@ -235,6 +264,23 @@ export default function App() {
     },
     [persistSettings, makeDrill, lang]
   );
+
+  const handleTopic = useCallback(
+    (value) => {
+      setTopic(value);
+      setCustomText(null);
+      if (mode !== "drill" && pool.length) setSnippet(choose(filterPool(pool, value)));
+    },
+    [mode, pool, choose, filterPool]
+  );
+
+  const toggleSyntax = useCallback(() => {
+    setSyntax((on) => {
+      persistSettings({ syntax: !on });
+      return !on;
+    });
+    refocus();
+  }, [persistSettings, refocus]);
 
   const handleLayout = useCallback(
     (value) => {
@@ -252,12 +298,12 @@ export default function App() {
   }, [theme, persistSettings, refocus]);
 
   const handleReset = useCallback(() => {
-    const fresh = { ...clearProfile(), settings: { theme, lang, division, layout, mode } };
+    const fresh = { ...clearProfile(), settings: { theme, lang, division, layout, mode, syntax } };
     setProfile(fresh);
     saveProfile(fresh);
     setSeries([]);
     setLastRun(null);
-  }, [theme, lang, division, layout, mode]);
+  }, [theme, lang, division, layout, mode, syntax]);
 
   const handleUseCustom = useCallback(
     (value) => {
@@ -368,7 +414,9 @@ export default function App() {
     if (worst) parts.push(`${displayChar(worst.expected)} → ${displayChar(worst.typed)}`);
     return parts.join("  ·  ");
   }, [profile.totals.lessons, profile.confusions, best]);
-  const shownPoolSize = loading ? manifestPoolSize(lang, division) : pool.length;
+  const shownPoolSize = loading
+    ? manifestPoolSize(lang, division)
+    : filterPool(pool, topic).length;
 
   return (
     <div className="tt-root" data-theme={theme}>
@@ -382,9 +430,20 @@ export default function App() {
           <span className="tt-titletext">
             codetypey — {isCustom ? "custom" : isDrill ? `drill/${lang}` : `${lang}/${division}`}
           </span>
-          <button className="tt-theme" onClick={toggleTheme} aria-label="Toggle colour theme">
-            {theme === "dark" ? "light" : "dark"}
-          </button>
+          <span className="tt-titlebar-actions">
+            <button
+              className="tt-syntax"
+              onClick={toggleSyntax}
+              aria-pressed={syntax}
+              aria-label="Toggle syntax colouring"
+              title="syntax colouring"
+            >
+              {syntax ? "colour on" : "colour off"}
+            </button>
+            <button className="tt-theme" onClick={toggleTheme} aria-label="Toggle colour theme">
+              {theme === "dark" ? "light" : "dark"}
+            </button>
+          </span>
         </div>
 
         <div className="tt-body">
@@ -406,16 +465,18 @@ export default function App() {
             lang={lang}
             division={division}
             mode={mode}
+            topic={topic}
+            topics={topics}
             poolSize={shownPoolSize}
             loading={loading}
             customActive={isCustom}
             onLang={handleLang}
             onDivision={handleDivision}
             onMode={handleMode}
+            onTopic={handleTopic}
             onNext={nextLesson}
             onRetry={session.restart}
             onCustom={() => setDialogOpen(true)}
-            onReset={handleReset}
             onRefocus={refocus}
           />
 
@@ -441,6 +502,9 @@ export default function App() {
                 live={session.live}
                 snippet={activeSnippet}
                 drill={isDrill ? drill : null}
+                lang={lang}
+                syntax={syntax}
+                outcome={session.status === "done" ? lastRun : null}
                 focusToken={focusToken}
                 onChar={session.pressChar}
                 onBackspace={session.pressBackspace}
@@ -487,6 +551,7 @@ export default function App() {
               onLayout={handleLayout}
               trendScope={trendScope}
               onTrendScope={setTrendScope}
+              onReset={handleReset}
             />
           </main>
         </div>

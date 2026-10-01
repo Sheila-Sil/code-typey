@@ -331,6 +331,44 @@ const junk = await page.goto(`${URL}?lang=nonsense&division=zzz&run=evil.evil.99
 );
 ok("a malformed url is ignored rather than trusted", junk.shared === 0 && junk.lang !== "nonsense", `lang fell back to ${junk.lang}`);
 
+/* ===================== 12b. topics, colour, reset ==================== */
+log("\ntopics, colour and reset");
+await page.goto(`${URL}?lang=rust&division=gold&topic=dp`, { waitUntil: "domcontentloaded" });
+await waitForLesson();
+const dpTopic = await page.$eval(".tt-topic", (el) => el.textContent.trim().toLowerCase());
+ok("a topic in the url filters the lesson", dpTopic === "dp", dpTopic);
+ok(
+  "the pool count reflects the topic filter",
+  /^\d+ snippets?$/.test(await page.$eval(".tt-pool", (e) => e.textContent.trim())) &&
+    Number.parseInt(await page.$eval(".tt-pool", (e) => e.textContent), 10) < 14
+);
+
+await page.goto(`${URL}?lang=rust&division=gold&topic=no-such-topic`, { waitUntil: "domcontentloaded" });
+await waitForLesson();
+ok(
+  "an unknown topic falls back to all",
+  (await page.$eval('select[aria-label="Topic"]', (e) => e.value)) === "all"
+);
+
+ok("keywords are coloured", (await page.$$(".tt-code .ch.tk-kw")).length > 0);
+await page.click(".tt-syntax");
+ok("the colour toggle turns highlighting off", (await page.$$(".tt-code .ch[class*='tk-']")).length === 0);
+await page.click(".tt-syntax");
+
+const resetBtn = ".tt-btn.danger";
+ok("reset is not in the toolbar", (await page.$$(".tt-bar .tt-btn.danger")).length === 0);
+if ((await page.getAttribute(".tt-analysis-toggle", "aria-expanded")) !== "true") {
+  await page.click(".tt-analysis-toggle");
+}
+await page.click('.tt-tab:has-text("history")');
+await page.click(resetBtn);
+ok(
+  "reset asks for a second click instead of wiping at once",
+  /again/.test(await page.$eval(resetBtn, (e) => e.textContent))
+);
+await page.click(resetBtn);
+ok("the second click resets", /reset profile/.test(await page.$eval(resetBtn, (e) => e.textContent)));
+
 /* ========================== 13. mobile layout ======================== */
 log("\nmobile");
 const mobile = await ctx.newPage();
