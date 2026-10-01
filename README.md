@@ -95,7 +95,7 @@ scripts/                        corpus linter, engine tests, browser test
 
 ## The corpus
 
-276 snippets across 6 languages × 4 divisions, tagged by topic — Dijkstra, DSU, Kruskal,
+348 snippets across 6 languages × 4 divisions, tagged by topic — Dijkstra, DSU, Kruskal,
 segment trees with lazy propagation, Tarjan SCC, binary lifting, convex hull, Z-function,
 Mo's algorithm, Dinic level graphs, and the everyday I/O and prefix-sum patterns
 underneath them.

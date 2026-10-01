@@ -112,6 +112,89 @@ export const GO = {
         }
       `,
     },
+    {
+      topic: "loops",
+      title: "count down",
+      code: dedent`
+        for i := n - 1; i >= 0; i-- {
+            if a[i] > best {
+                best = a[i]
+                leaders = append(leaders, i)
+            }
+        }
+      `,
+    },
+    {
+      topic: "strings",
+      title: "count vowels",
+      code: dedent`
+        vowels := 0
+        for _, c := range s {
+            if strings.ContainsRune("aeiou", c) {
+                vowels++
+            }
+        }
+        fmt.Println(vowels)
+      `,
+    },
+    {
+      topic: "math",
+      title: "digit sum",
+      code: dedent`
+        func digitSum(x int64) int64 {
+            var s int64
+            for x > 0 {
+                s += x % 10
+                x /= 10
+            }
+            return s
+        }
+      `,
+    },
+    {
+      topic: "structs",
+      title: "struct with a method",
+      code: dedent`
+        type Point struct {
+            X, Y int
+        }
+
+        func (p Point) Manhattan(q Point) int {
+            return abs(p.X-q.X) + abs(p.Y-q.Y)
+        }
+      `,
+    },
+    {
+      topic: "simulation",
+      title: "bucket pouring",
+      code: dedent`
+        cap := [3]int{}
+        amt := [3]int{}
+        for step := 0; step < 100; step++ {
+            from, to := step%3, (step+1)%3
+            pour := min(amt[from], cap[to]-amt[to])
+            amt[from] -= pour
+            amt[to] += pour
+        }
+      `,
+    },
+    {
+      topic: "grids",
+      title: "four-direction neighbours",
+      code: dedent`
+        dr := []int{-1, 1, 0, 0}
+        dc := []int{0, 0, -1, 1}
+        for d := 0; d < 4; d++ {
+            nr, nc := r+dr[d], c+dc[d]
+            if nr < 0 || nr >= n || nc < 0 || nc >= m {
+                continue
+            }
+            if grid[nr][nc] == '#' {
+                walls++
+            }
+        }
+      `,
+    },
   ],
 
   silver: [
@@ -226,6 +309,99 @@ export const GO = {
             }
             seen[x] = struct{}{}
         }
+      `,
+    },
+    {
+      topic: "prefix sums",
+      title: "2D prefix sums",
+      code: dedent`
+        p := make([][]int64, n+1)
+        for i := range p {
+            p[i] = make([]int64, m+1)
+        }
+        for i := 0; i < n; i++ {
+            for j := 0; j < m; j++ {
+                p[i+1][j+1] = g[i][j] + p[i][j+1] + p[i+1][j] - p[i][j]
+            }
+        }
+      `,
+    },
+    {
+      topic: "binary search",
+      title: "binary search on the answer",
+      code: dedent`
+        lo, hi := 0, 2_000_000_000
+        for lo < hi {
+            mid := lo + (hi-lo)/2
+            if feasible(mid) {
+                hi = mid
+            } else {
+                lo = mid + 1
+            }
+        }
+        fmt.Fprintln(writer, lo)
+      `,
+    },
+    {
+      topic: "dfs",
+      title: "recursive dfs with a closure",
+      code: dedent`
+        seen := make([]bool, n)
+        var dfs func(u int)
+        dfs = func(u int) {
+            seen[u] = true
+            for _, v := range adj[u] {
+                if !seen[v] {
+                    dfs(v)
+                }
+            }
+        }
+        dfs(0)
+      `,
+    },
+    {
+      topic: "sliding window",
+      title: "longest window under a budget",
+      code: dedent`
+        l, sum, best := 0, 0, 0
+        for r := 0; r < n; r++ {
+            sum += a[r]
+            for sum > k {
+                sum -= a[l]
+                l++
+            }
+            best = max(best, r-l+1)
+        }
+      `,
+    },
+    {
+      topic: "compression",
+      title: "coordinate compression",
+      code: dedent`
+        xs := append([]int(nil), a...)
+        sort.Ints(xs)
+        k := 0
+        for i := range xs {
+            if i == 0 || xs[i] != xs[i-1] {
+                xs[k] = xs[i]
+                k++
+            }
+        }
+        xs = xs[:k]
+        idx := sort.SearchInts(xs, v)
+      `,
+    },
+    {
+      topic: "sorting",
+      title: "sort.Sort with a custom type",
+      code: dedent`
+        type byEnd [][2]int
+
+        func (b byEnd) Len() int           { return len(b) }
+        func (b byEnd) Less(i, j int) bool { return b[i][1] < b[j][1] }
+        func (b byEnd) Swap(i, j int)      { b[i], b[j] = b[j], b[i] }
+
+        sort.Sort(byEnd(iv))
       `,
     },
   ],
@@ -376,6 +552,121 @@ export const GO = {
         fmt.Fprintln(writer, sb.String())
       `,
     },
+    {
+      topic: "bfs",
+      title: "0-1 bfs with a deque",
+      code: dedent`
+        dist := make([]int, n)
+        for i := range dist {
+            dist[i] = 1 << 60
+        }
+        dist[s] = 0
+        dq := []int{s}
+        for len(dq) > 0 {
+            u := dq[0]
+            dq = dq[1:]
+            for _, e := range adj[u] {
+                if dist[u]+e.w < dist[e.to] {
+                    dist[e.to] = dist[u] + e.w
+                    if e.w == 0 {
+                        dq = append([]int{e.to}, dq...)
+                    } else {
+                        dq = append(dq, e.to)
+                    }
+                }
+            }
+        }
+      `,
+    },
+    {
+      topic: "dp",
+      title: "longest common subsequence",
+      code: dedent`
+        dp := make([][]int, len(a)+1)
+        for i := range dp {
+            dp[i] = make([]int, len(b)+1)
+        }
+        for i := 1; i <= len(a); i++ {
+            for j := 1; j <= len(b); j++ {
+                if a[i-1] == b[j-1] {
+                    dp[i][j] = dp[i-1][j-1] + 1
+                } else {
+                    dp[i][j] = max(dp[i-1][j], dp[i][j-1])
+                }
+            }
+        }
+      `,
+    },
+    {
+      topic: "mst",
+      title: "kruskal over sorted edges",
+      code: dedent`
+        sort.Slice(edges, func(i, j int) bool {
+            return edges[i].w < edges[j].w
+        })
+        total := int64(0)
+        for _, e := range edges {
+            if union(e.u, e.v) {
+                total += int64(e.w)
+            }
+        }
+      `,
+    },
+    {
+      topic: "trees",
+      title: "subtree sizes",
+      code: dedent`
+        sz := make([]int, n)
+        var dfs func(u, p int)
+        dfs = func(u, p int) {
+            sz[u] = 1
+            for _, v := range adj[u] {
+                if v != p {
+                    dfs(v, u)
+                    sz[u] += sz[v]
+                }
+            }
+        }
+        dfs(0, -1)
+      `,
+    },
+    {
+      topic: "dp",
+      title: "bitmask dp over subsets",
+      code: dedent`
+        full := 1 << n
+        dp := make([]int, full)
+        for i := 1; i < full; i++ {
+            dp[i] = math.MaxInt
+        }
+        for mask := 0; mask < full; mask++ {
+            i := bits.OnesCount(uint(mask))
+            for j := 0; j < n; j++ {
+                if mask&(1<<j) == 0 && dp[mask] != math.MaxInt {
+                    nxt := mask | 1<<j
+                    dp[nxt] = min(dp[nxt], dp[mask]+cost[i][j])
+                }
+            }
+        }
+      `,
+    },
+    {
+      topic: "hashing",
+      title: "polynomial rolling hash",
+      code: dedent`
+        const B, M = 131, 1_000_000_007
+        h := make([]int64, n+1)
+        pw := make([]int64, n+1)
+        pw[0] = 1
+        for i := 0; i < n; i++ {
+            h[i+1] = (h[i]*B + int64(s[i])) % M
+            pw[i+1] = pw[i] * B % M
+        }
+        get := func(l, r int) int64 {
+            return ((h[r]-h[l]*pw[r-l])%M + M) % M
+        }
+      `,
+    },
   ],
 
   platinum: [
@@ -488,6 +779,122 @@ export const GO = {
         }
         wg.Wait()
         close(results)
+      `,
+    },
+    {
+      topic: "segment tree",
+      title: "lazy range add",
+      code: dedent`
+        func push(x int) {
+            if lz[x] != 0 {
+                for _, c := range [2]int{2 * x, 2*x + 1} {
+                    t[c] += lz[x]
+                    lz[c] += lz[x]
+                }
+                lz[x] = 0
+            }
+        }
+      `,
+    },
+    {
+      topic: "scc",
+      title: "tarjan's low-link",
+      code: dedent`
+        var dfs func(u int)
+        dfs = func(u int) {
+            idx[u], low[u] = timer, timer
+            timer++
+            stack = append(stack, u)
+            on[u] = true
+            for _, v := range adj[u] {
+                if idx[v] == -1 {
+                    dfs(v)
+                    low[u] = min(low[u], low[v])
+                } else if on[v] {
+                    low[u] = min(low[u], idx[v])
+                }
+            }
+        }
+      `,
+    },
+    {
+      topic: "number theory",
+      title: "linear sieve",
+      code: dedent`
+        lp := make([]int, n+1)
+        primes := []int{}
+        for i := 2; i <= n; i++ {
+            if lp[i] == 0 {
+                lp[i] = i
+                primes = append(primes, i)
+            }
+            for _, p := range primes {
+                if p > lp[i] || i*p > n {
+                    break
+                }
+                lp[i*p] = p
+            }
+        }
+      `,
+    },
+    {
+      topic: "flows",
+      title: "dinic blocking flow",
+      code: dedent`
+        func (g *Dinic) dfs(u, t int, f int64) int64 {
+            if u == t {
+                return f
+            }
+            for ; g.it[u] < len(g.adj[u]); g.it[u]++ {
+                e := g.adj[u][g.it[u]]
+                v := g.to[e]
+                if g.cap[e] > 0 && g.level[v] == g.level[u]+1 {
+                    if d := g.dfs(v, t, min(f, g.cap[e])); d > 0 {
+                        g.cap[e] -= d
+                        g.cap[e^1] += d
+                        return d
+                    }
+                }
+            }
+            return 0
+        }
+      `,
+    },
+    {
+      topic: "sparse table",
+      title: "range minimum in O(1)",
+      code: dedent`
+        lg := bits.Len(uint(n))
+        sp := make([][]int, lg)
+        sp[0] = append([]int(nil), a...)
+        for k := 1; k < lg; k++ {
+            sp[k] = make([]int, n-(1<<k)+1)
+            for i := range sp[k] {
+                sp[k][i] = min(sp[k-1][i], sp[k-1][i+1<<(k-1)])
+            }
+        }
+      `,
+    },
+    {
+      topic: "dp",
+      title: "convex hull trick query",
+      code: dedent`
+        type line struct{ m, b int64 }
+
+        func (l line) at(x int64) int64 { return l.m*x + l.b }
+
+        func query(hull []line, x int64) int64 {
+            lo, hi := 0, len(hull)-1
+            for lo < hi {
+                mid := (lo + hi) / 2
+                if hull[mid].at(x) >= hull[mid+1].at(x) {
+                    lo = mid + 1
+                } else {
+                    hi = mid
+                }
+            }
+            return hull[lo].at(x)
+        }
       `,
     },
   ],
