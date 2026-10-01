@@ -5,6 +5,7 @@ import Heatmap from "./Heatmap.jsx";
 import ConfusionPanel from "./ConfusionPanel.jsx";
 import BigramPanel from "./BigramPanel.jsx";
 import SessionLog from "./SessionLog.jsx";
+import ResetButton from "./ResetButton.jsx";
 
 const TABS = [
   { id: "progress", label: "progress" },
@@ -33,6 +34,7 @@ export default function Analysis({
   onLayout,
   trendScope,
   onTrendScope,
+  onReset,
 }) {
   return (
     <section className="tt-analysis">
@@ -88,7 +90,15 @@ export default function Analysis({
               </>
             )}
 
-            {tab === "history" && <SessionLog history={profile.history} totals={profile.totals} />}
+            {tab === "history" && (
+              <>
+                <SessionLog history={profile.history} totals={profile.totals} />
+                <div className="tt-danger-zone">
+                  <span>clears runs, bests and weak-key stats on this device</span>
+                  <ResetButton onReset={onReset} />
+                </div>
+              </>
+            )}
           </div>
         </>
       )}

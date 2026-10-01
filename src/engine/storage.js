@@ -14,11 +14,21 @@ const RECENT_CAP = 12;
 
 export const PROFILE_VERSION = 2;
 
+/** First visit follows the OS; after that the saved choice wins. */
+function systemTheme() {
+  try {
+    return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+  } catch {
+    return "dark";
+  }
+}
+
 export function emptyProfile() {
   return {
     version: PROFILE_VERSION,
     settings: {
-      theme: "dark",
+      theme: systemTheme(),
+      syntax: true,
       lang: "cpp",
       division: "bronze",
       layout: "qwerty",

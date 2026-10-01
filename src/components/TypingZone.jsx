@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useCallback, useMemo, useState } from "react"
 import { displayChar, CORRECT, WRONG } from "../engine/lesson.js";
 import { speakChar, speakRun } from "../engine/speech.js";
 import { difficultyBand } from "../engine/difficulty.js";
+import { highlight } from "../engine/highlight.js";
 
 /**
  * The typing surface.
@@ -27,6 +28,9 @@ export default function TypingZone({
   live,
   snippet,
   drill,
+  lang,
+  syntax = true,
+  outcome,
   focusToken,
   onChar,
   onBackspace,
@@ -145,6 +149,7 @@ export default function TypingZone({
   );
 
   const done = status === "done";
+  const tokens = useMemo(() => (syntax ? highlight(text, lang) : null), [syntax, text, lang]);
   const band = snippet?.difficulty != null ? difficultyBand(snippet.difficulty) : null;
 
   return (
@@ -229,6 +234,8 @@ export default function TypingZone({
           else if (entry.state === CORRECT) cls += " correct";
           else if (entry.state === WRONG) cls += " incorrect";
           else cls += " pending";
+          const tok = tokens?.[i];
+          if (tok) cls += ` tk-${tok}`;
 
           const isCursor = i === cursor && !done;
           if (isCursor) cls += " current";
@@ -266,6 +273,7 @@ export default function TypingZone({
               <span>raw wpm</span>
             </div>
           </div>
+          {outcome?.counts && <BestNote outcome={outcome} />}
           <div className="tt-done-actions">
             <button className="tt-btn" onClick={onNext}>
               next <kbd>⏎</kbd>
@@ -276,6 +284,30 @@ export default function TypingZone({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/** One line under the result: did that move your best for this bucket? */
+function BestNote({ outcome }) {
+  const { isBest, prevBest, netWpm, accuracy } = outcome;
+  if (isBest) {
+    return (
+      <div className="tt-best-note new">
+        {prevBest
+          ? `new personal best, +${netWpm - prevBest.netWpm} over ${prevBest.netWpm} wpm`
+          : "first personal best here"}
+      </div>
+    );
+  }
+  if (accuracy < 90 && (!prevBest || netWpm > prevBest.netWpm)) {
+    return <div className="tt-best-note">bests need 90% accuracy, so this one doesn't count</div>;
+  }
+  if (!prevBest) return null;
+  const gap = prevBest.netWpm - netWpm;
+  return (
+    <div className="tt-best-note">
+      {gap === 0 ? "tied" : `${gap} wpm off`} your best of {prevBest.netWpm}
     </div>
   );
 }

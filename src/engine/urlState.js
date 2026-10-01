@@ -1,7 +1,7 @@
 /**
  * Bookmarkable state, and shareable results without a backend.
  *
- * `?lang=python&division=gold&mode=drill` restores a setup; `?run=…` carries a
+ * `?lang=python&division=gold&mode=drill&topic=dp` restores a setup; `?run=…` carries a
  * finished result so a link can say "beat this" — everything encoded in the URL
  * itself, since this deploys as a static site with nothing behind it.
  */
@@ -24,20 +24,26 @@ export function readUrlState(fallback) {
   const lang = q.get("lang");
   const division = q.get("division");
   const mode = q.get("mode");
+  const topic = q.get("topic");
 
   return {
     lang: isLanguage(lang) ? lang : fallback.lang,
     division: isDivision(division) ? division : fallback.division,
     mode: MODES.includes(mode) ? mode : fallback.mode || "snippets",
+    // Topics live in the lazily-loaded banks, so this is only shape-checked
+    // here; the app falls back to "all" if the pool doesn't have it.
+    topic: topic && /^[a-z0-9 '/-]{1,40}$/.test(topic) ? topic : "all",
   };
 }
 
-export function writeUrlState({ lang, division, mode }) {
+export function writeUrlState({ lang, division, mode, topic = "all" }) {
   try {
     const q = params();
     q.set("lang", lang);
     q.set("division", division);
     q.set("mode", mode);
+    if (topic && topic !== "all") q.set("topic", topic);
+    else q.delete("topic");
     // A run in the URL belongs to the link that was opened, not to whatever the
     // reader does next.
     q.delete("run");
